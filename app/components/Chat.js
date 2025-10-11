@@ -1,4 +1,4 @@
-// app/components/Chat.js — RAWN PRO ⚡ Chat com streaming em tempo real
+// app/components/Chat.js — RAWN PRO ⚡ Chat com streaming otimizado e diagnóstico
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -17,7 +17,7 @@ export default function Chat() {
     }
   }, [messages, partialResponse]);
 
-  // Envio de mensagem
+  // 🚀 Envio de mensagem
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
@@ -30,7 +30,6 @@ export default function Chat() {
     setPartialResponse("");
 
     try {
-      // Envia requisição streaming
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -42,14 +41,31 @@ export default function Chat() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let botMsg = "";
+      let buffer = "";
+      let lastRender = Date.now();
+      const renderInterval = 50; // 🔧 Atualiza o DOM a cada 50ms
+
+      console.time("RAWN_STREAM"); // Diagnóstico de tempo real
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+
         const chunk = decoder.decode(value, { stream: true });
         botMsg += chunk;
-        setPartialResponse(botMsg);
+        buffer += chunk;
+
+        // Atualiza o texto em intervalos curtos (melhor desempenho)
+        if (Date.now() - lastRender > renderInterval) {
+          setPartialResponse(botMsg);
+          buffer = "";
+          lastRender = Date.now();
+        }
       }
+
+      if (buffer.length > 0) setPartialResponse(botMsg);
+
+      console.timeEnd("RAWN_STREAM"); // ⏱️ Tempo total do streaming
 
       // Salva resposta completa
       setMessages((prev) => [...prev, { role: "assistant", content: botMsg }]);
@@ -73,7 +89,11 @@ export default function Chat() {
             key={i}
             className={`rp-row ${msg.role === "user" ? "rp-right" : "rp-left"}`}
           >
-            <div className={`rp-bubble ${msg.role === "user" ? "rp-user" : "rp-bot"}`}>
+            <div
+              className={`rp-bubble ${
+                msg.role === "user" ? "rp-user" : "rp-bot"
+              }`}
+            >
               {msg.content}
             </div>
           </div>
@@ -113,7 +133,11 @@ export default function Chat() {
             stroke="currentColor"
             className="rp-send-ic"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12l15-7.5L13.5 12l6 7.5-15-7.5z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4.5 12l15-7.5L13.5 12l6 7.5-15-7.5z"
+            />
           </svg>
         </button>
       </form>
