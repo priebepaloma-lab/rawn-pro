@@ -1,17 +1,18 @@
 {
   "name": "RAWN PRO — Alta Performance Fitness Pro",
   "short_name": "RAWN PRO",
-  "description": "Assistente de alta performance com IA — treinos, constância emocional e performance.",
-  "lang": "pt-BR",
-  "start_url": "/",
+  "description": "App de alta performance fitness: treinos, nutrição e chat com IA RAWN PRO.",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
   "orientation": "portrait",
   "background_color": "#0b0b0b",
   "theme_color": "#00ffa3",
+  "categories": ["health", "fitness", "productivity", "ai", "assistant"],
   "icons": [
     {
-      "src": "/icon-512.png",
+      "src": "/assets/logo-simple.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -22,41 +23,51 @@
       "type": "image/png"
     },
     {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
       "src": "/apple-touch-icon.png",
       "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/splash-dark.png",
-      "sizes": "1280x2778",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/splash-light.png",
-      "sizes": "1280x2778",
       "type": "image/png",
       "purpose": "any"
     }
   ],
   "screenshots": [
     {
-      "src": "/splash-light.png",
-      "sizes": "1280x2778",
+      "src": "/splash-dark.png",
       "type": "image/png",
-      "form_factor": "wide",
-      "label": "Tela inicial - modo claro"
+      "sizes": "1170x2532",
+      "form_factor": "narrow",
+      "label": "Tela inicial RAWN PRO (tema escuro)"
     },
     {
-      "src": "/splash-dark.png",
-      "sizes": "1280x2778",
+      "src": "/splash-light.png",
       "type": "image/png",
+      "sizes": "1170x2532",
       "form_factor": "narrow",
-      "label": "Tela inicial - modo escuro"
+      "label": "Tela inicial RAWN PRO (tema claro)"
     }
   ],
-  "categories": ["health", "fitness", "productivity", "ai"],
   "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Abrir Chat",
+      "short_name": "Chat",
+      "url": "/chat",
+      "icons": [{ "src": "/favicon-64.png", "sizes": "64x64" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "id": "/?source=pwa",
+  "lang": "pt-BR",
   "dir": "ltr"
 }
