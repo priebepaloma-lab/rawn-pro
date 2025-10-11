@@ -1,133 +1,122 @@
+// app/components/Chat.js — RAWN PRO ⚡ Chat com streaming em tempo real
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 export default function Chat() {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: "Olá! Eu sou o RAWN PRO 🧠 Como posso te ajudar no treino hoje?",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const chatWindowRef = useRef(null);
+  const [partialResponse, setPartialResponse] = useState("");
 
-  // Auto-scroll
+  // 🔽 Scroll automático para última mensagem
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
+  }, [messages, partialResponse]);
 
-  // Enviar mensagem
+  // Envio de mensagem
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
 
-    const userMessage = { role: "user", content: input };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    const userMsg = { role: "user", content: input };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput("");
-    setIsTyping(true);
+    setLoading(true);
+    setPartialResponse("");
 
     try {
-      const res = await fetch("/api/chat", {
+      // Envia requisição streaming
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updatedMessages }),
+        body: JSON.stringify({ messages: newMessages }),
       });
 
-      const data = await res.json();
-      const botMessage = { role: "assistant", content: data.reply };
-      setMessages([...updatedMessages, botMessage]);
-    } catch {
-      setMessages([
-        ...updatedMessages,
-        {
-          role: "assistant",
-          content: "⚠️ Houve um erro ao gerar a resposta. Tente novamente.",
-        },
+      if (!response.ok) throw new Error("Falha na resposta da IA");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let botMsg = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        botMsg += chunk;
+        setPartialResponse(botMsg);
+      }
+
+      // Salva resposta completa
+      setMessages((prev) => [...prev, { role: "assistant", content: botMsg }]);
+    } catch (err) {
+      console.error("Erro:", err);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "⚠️ Ocorreu um erro. Tente novamente." },
       ]);
     } finally {
-      setIsTyping(false);
+      setLoading(false);
+      setPartialResponse("");
     }
   };
 
   return (
-    // ❗️Sem header/rodapé aqui — o layout.js já fornece.
-    <section className="rp-chat">
-      <div className="rp-window">
-        {messages.map((message, index) => (
+    <div className="rp-chat">
+      <div className="rp-window" ref={chatWindowRef}>
+        {messages.map((msg, i) => (
           <div
-            key={index}
-            className={`rp-row ${
-              message.role === "user" ? "rp-right" : "rp-left"
-            }`}
+            key={i}
+            className={`rp-row ${msg.role === "user" ? "rp-right" : "rp-left"}`}
           >
-            <div
-              className={`rp-bubble ${
-                message.role === "user" ? "rp-user" : "rp-bot"
-              }`}
-            >
-              {message.role === "assistant" ? (
-                <div className="markdown">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.content}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                message.content
-              )}
+            <div className={`rp-bubble ${msg.role === "user" ? "rp-user" : "rp-bot"}`}>
+              {msg.content}
             </div>
           </div>
         ))}
 
-        {/* 💬 “digitando…” */}
-        {isTyping && (
+        {/* Texto sendo gerado em tempo real */}
+        {partialResponse && (
           <div className="rp-row rp-left">
-            <div className="rp-bubble rp-bot rp-typing flex items-center gap-2">
-              <span className="inline-block animate-pulse">💬</span>
-              <span className="flex gap-1">
-                <span className="animate-bounce delay-[0ms]">.</span>
-                <span className="animate-bounce delay-[150ms]">.</span>
-                <span className="animate-bounce delay-[300ms]">.</span>
-              </span>
+            <div className="rp-bubble rp-bot rp-typing">
+              {partialResponse}
+              <span className="blinker">▋</span>
             </div>
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+        {loading && !partialResponse && (
+          <div className="rp-row rp-left">
+            <div className="rp-bubble rp-bot rp-typing">Digitando...</div>
+          </div>
+        )}
       </div>
 
-      <form onSubmit={sendMessage} className="rp-composer">
+      <form className="rp-composer" onSubmit={sendMessage}>
         <input
           className="rp-input"
-          type="text"
           placeholder="Digite sua mensagem..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          disabled={loading}
         />
-        <button
-          type="submit"
-          className={`rp-send ${!input.trim() ? "rp-send--disabled" : ""}`}
-          disabled={!input.trim()}
-        >
+        <button type="submit" className="rp-send" disabled={loading}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
             fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2.4"
             stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
             className="rp-send-ic"
           >
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12l15-7.5L13.5 12l6 7.5-15-7.5z" />
           </svg>
         </button>
       </form>
-    </section>
+    </div>
   );
 }
