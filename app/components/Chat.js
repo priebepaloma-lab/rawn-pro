@@ -1,139 +1,133 @@
-// components/Chat.js
 "use client";
+
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function Chat() {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
-  const chatEndRef = useRef(null);
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: "Olá! Eu sou o RAWN PRO 🧠 Como posso te ajudar no treino hoje?",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
 
+  // Auto-scroll
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
 
-  const handleSend = async (e) => {
+  // Enviar mensagem
+  const sendMessage = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!input.trim()) return;
 
-    const newMessage = { sender: "user", text: message };
-    setMessages((prev) => [...prev, newMessage]);
-    setMessage("");
+    const userMessage = { role: "user", content: input };
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInput("");
+    setIsTyping(true);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ messages: updatedMessages }),
       });
 
       const data = await res.json();
-      if (data?.reply) {
-        setMessages((prev) => [...prev, { sender: "bot", text: data.reply }]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { sender: "bot", text: "Sem resposta do servidor." },
-        ]);
-      }
-    } catch (error) {
-      console.error("Erro:", error);
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: "Erro ao se comunicar com o servidor." },
+      const botMessage = { role: "assistant", content: data.reply };
+      setMessages([...updatedMessages, botMessage]);
+    } catch {
+      setMessages([
+        ...updatedMessages,
+        {
+          role: "assistant",
+          content: "⚠️ Houve um erro ao gerar a resposta. Tente novamente.",
+        },
       ]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        maxWidth: "600px",
-        height: "80vh",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        borderRadius: "12px",
-        padding: "1rem",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-          marginBottom: "1rem",
-          paddingRight: "0.5rem",
-        }}
-      >
-        {messages.map((msg, idx) => (
+    // ❗️Sem header/rodapé aqui — o layout.js já fornece.
+    <section className="rp-chat">
+      <div className="rp-window">
+        {messages.map((message, index) => (
           <div
-            key={idx}
-            style={{
-              alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
-              backgroundColor:
-                msg.sender === "user" ? "#00c853" : "rgba(255,255,255,0.1)",
-              color: msg.sender === "user" ? "#000" : "#fff",
-              padding: "0.75rem 1rem",
-              borderRadius: "15px",
-              maxWidth: "80%",
-              wordBreak: "break-word",
-            }}
+            key={index}
+            className={`rp-row ${
+              message.role === "user" ? "rp-right" : "rp-left"
+            }`}
           >
-            {msg.text}
+            <div
+              className={`rp-bubble ${
+                message.role === "user" ? "rp-user" : "rp-bot"
+              }`}
+            >
+              {message.role === "assistant" ? (
+                <div className="markdown">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                message.content
+              )}
+            </div>
           </div>
         ))}
-        <div ref={chatEndRef} />
+
+        {/* 💬 “digitando…” */}
+        {isTyping && (
+          <div className="rp-row rp-left">
+            <div className="rp-bubble rp-bot rp-typing flex items-center gap-2">
+              <span className="inline-block animate-pulse">💬</span>
+              <span className="flex gap-1">
+                <span className="animate-bounce delay-[0ms]">.</span>
+                <span className="animate-bounce delay-[150ms]">.</span>
+                <span className="animate-bounce delay-[300ms]">.</span>
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
       </div>
 
-      <form
-        onSubmit={handleSend}
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          width: "100%",
-        }}
-      >
+      <form onSubmit={sendMessage} className="rp-composer">
         <input
+          className="rp-input"
           type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
           placeholder="Digite sua mensagem..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend(e);
-            }
-          }}
-          style={{
-            flex: 1,
-            padding: "0.75rem",
-            borderRadius: "8px",
-            border: "1px solid rgba(255,255,255,0.3)",
-            backgroundColor: "rgba(0,0,0,0.3)",
-            color: "#fff",
-            fontSize: "1rem",
-          }}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
         />
         <button
           type="submit"
-          style={{
-            padding: "0.75rem 1.25rem",
-            backgroundColor: "#00c853",
-            color: "#000",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
+          className={`rp-send ${!input.trim() ? "rp-send--disabled" : ""}`}
+          disabled={!input.trim()}
         >
-          Enviar
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="rp-send-ic"
+          >
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
         </button>
       </form>
-    </div>
+    </section>
   );
 }

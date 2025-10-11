@@ -1,37 +1,37 @@
-// app/layout.js
+// app/layout.js — RAWN PRO • Head (PWA) + color-scheme meta + wrapper
 import "./globals.css";
+import LayoutClient from "./layout.client";
 
 export const metadata = {
   title: "RAWN PRO — Alta Performance Fitness Pro",
   description:
-    "Coach digital de alta performance com foco em consciência, segurança e presença.",
+    "Assistente de alta performance com IA — treinos, constância emocional e performance.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* PWA */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon-64.png" sizes="64x64" type="image/png" />
+        <meta name="theme-color" content="#00ffa3" />
+
+        {/* iOS */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="RAWN PRO" />
+        <link rel="apple-touch-icon" href="/icon-512.png" />
+
+        {/* 👉 força os controles nativos (incl. barra acima do teclado) a usarem tema escuro */}
+        <meta name="color-scheme" content="dark" />
       </head>
-      <body className="rp-body">
-        {/* HEADER */}
-        <header className="rp-header">
-          <img
-            src="/assets/logo.png"
-            alt="RAWN PRO"
-            className="rp-logo"
-            draggable="false"
-          />
-          <h1 className="rp-subtitle">Alta Performance Fitness Pro</h1>
-        </header>
 
-        {/* MAIN */}
-        <main className="rp-shell">{children}</main>
-
-        {/* FOOTER (único, não repete) */}
-        <footer className="rp-footer">
-          RAWN PRO © 2025 — Consciência, Segurança e Performance.
-        </footer>
+      <body>
+        <LayoutClient>{children}</LayoutClient>
       </body>
     </html>
   );
