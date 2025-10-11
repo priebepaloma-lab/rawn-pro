@@ -1,81 +1,98 @@
-// ⚡ RAWN PRO — API Chat Inteligente com Roteamento Automático + Streaming + Performance Boost
+// app/api/chat/route.js — RAWN PRO ⚡ Streaming + Pré-diálogo inteligente (sem libs novas)
 import OpenAI from "openai";
-import { NextResponse } from "next/server";
+import { SYSTEM_PROMPT } from "../../lib/system-prompt";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Função auxiliar: identifica se o prompt é complexo
-function isComplexPrompt(text) {
-  const len = text.length;
-  const complexKeywords = [
-    "plano", "semana", "cronograma", "dieta", "avançado",
-    "personalizado", "periodização", "estratégia", "maratona",
-    "nutrição", "fases", "competição", "progresso", "revisão"
-  ];
-  const hasComplexWords = complexKeywords.some((w) =>
-    text.toLowerCase().includes(w)
-  );
-  return len > 280 || hasComplexWords;
-}
-
-// 🔄 Função principal
 export async function POST(req) {
-  const start = Date.now();
-
   try {
-    const { messages } = await req.json();
-    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    if (!process.env.OPENAI_API_KEY) {
+      return new Response("OPENAI_API_KEY não configurada.", { status: 500 });
+    }
 
-    // 🔍 Seleciona modelo dinamicamente
-    const useGpt4o = isComplexPrompt(lastUserMessage);
-    const model = useGpt4o ? "gpt-4o" : "gpt-4o-mini";
+    const body = await req.json().catch(() => ({}));
+    const { messages, message } = body || {};
+    const history =
+      messages ?? (message ? [{ role: "user", content: String(message) }] : []);
 
-    console.log(`🤖 Modelo usado: ${model}`);
+    if (!history.length) {
+      return new Response("Nenhuma mensagem recebida.", { status: 400 });
+    }
 
-    // 🔥 Streaming de resposta
+    // 🔎 Pré-diálogo inteligente
+    const last = history[history.length - 1];
+    const lastText = (last?.content || "").toLowerCase();
+    const isUser = last?.role === "user";
+
+    const gatilhos = [
+      "treino",
+      "treinamento",
+      "planilha",
+      "corrida",
+      "maratona",
+      "musculação",
+      "força",
+      "hipertrofia",
+      "emagrecimento",
+      "dieta",
+      "alimentação",
+      "plano",
+    ];
+
+    const primeiraRespostaDoAssistente =
+      history.findIndex((m) => m.role === "assistant") === -1;
+
+    const pedePlano = isUser && gatilhos.some((t) => lastText.includes(t));
+
+    if (primeiraRespostaDoAssistente && pedePlano) {
+      const texto =
+        "👋 Perfeito! Antes de montar seu plano completo, preciso de **3 informações rápidas** para personalizar de verdade:\n\n" +
+        "1️⃣ Qual é o seu **nível atual** (iniciante, intermediário ou avançado)?\n" +
+        "2️⃣ Quantos **dias/semana** você consegue treinar?\n" +
+        "3️⃣ Qual o **foco principal** agora (força, resistência, perda de gordura, ou corrida/maratona) ?\n\n" +
+        "Assim que você responder, eu gero o plano completo com progressões, volumes e ajustes.\n" +
+        "_⚙️ Leva cerca de **20 segundos** porque o RAWN PRO calcula cargas, intensidades e recuperação de forma automática._";
+
+      // Resposta direta (um único chunk). Seu Chat.js lida bem com isso.
+      return new Response(texto, {
+        status: 200,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    // ✅ Resposta normal com streaming (como você já usava)
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
     const completion = await client.chat.completions.create({
-      model,
-      messages,
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      temperature: 0.7,
+      max_tokens: 800,
       stream: true,
-      temperature: useGpt4o ? 0.7 : 0.6,
-      max_tokens: 600,
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...history],
     });
 
     const encoder = new TextEncoder();
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of completion) {
-            const token = chunk.choices?.[0]?.delta?.content || "";
-            controller.enqueue(encoder.encode(token));
+          for await (const part of completion) {
+            const delta = part.choices?.[0]?.delta?.content;
+            if (delta) controller.enqueue(encoder.encode(delta));
           }
-        } catch (err) {
-          console.error("⚠️ Erro no stream:", err);
-          controller.enqueue(
-            encoder.encode("⚠️ Erro ao processar a resposta. Tente novamente.")
-          );
+        } catch (e) {
+          console.error("Stream error:", e);
+          controller.enqueue(encoder.encode("⚠️ Erro ao gerar resposta."));
         } finally {
-          const duration = ((Date.now() - start) / 1000).toFixed(1);
-          console.log(`✅ Resposta concluída em ${duration}s (${model})`);
           controller.close();
         }
       },
     });
 
-    return new NextResponse(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-      },
+    return new Response(stream, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   } catch (error) {
-    console.error("❌ Erro geral no endpoint /api/chat:", error);
-    return NextResponse.json(
-      { error: "Falha ao processar requisição" },
-      { status: 500 }
-    );
+    console.error("❌ Erro interno na rota /api/chat:", error);
+    return new Response("Erro interno no RAWN PRO", { status: 500 });
   }
 }
