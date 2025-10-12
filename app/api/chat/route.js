@@ -1,47 +1,27 @@
-// RAWN PRO — /api/chat (Edge streaming + roteamento de modelo + logs)
+// RAWN PRO — rota estável (versão original funcional)
+// Simples e compatível com Vercel Edge, usa apenas gpt-4o-mini
+
 import OpenAI from "openai";
 
-export const runtime = "edge"; // garante Web Streams/ReadableStream nativo no Vercel
+export const runtime = "edge";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Heurística simples para decidir entre mini e 4o
-function isComplexPrompt(text = "") {
-  const len = text.length;
-  const complexKeywords = [
-    "plano", "semana", "cronograma", "dieta", "avançado",
-    "personalizado", "periodização", "estratégia", "maratona",
-    "nutrição", "fases", "competição", "progresso", "revisão",
-  ];
-  const hasComplexWords = complexKeywords.some((w) =>
-    text.toLowerCase().includes(w)
-  );
-  return len > 280 || hasComplexWords;
-}
-
 export async function POST(req) {
-  const t0 = Date.now();
-
   try {
     const { messages } = await req.json();
-    if (!Array.isArray(messages) || messages.length === 0) {
+
+    if (!messages || !Array.isArray(messages)) {
       return new Response("Bad request", { status: 400 });
     }
 
-    const lastUserMessage = messages[messages.length - 1]?.content || "";
-    const useGpt4o = isComplexPrompt(lastUserMessage);
-    const model = useGpt4o ? "gpt-4o" : "gpt-4o-mini";
-
-    console.log(`[RAWN PRO] usando modelo: ${model}`);
-
     const completion = await client.chat.completions.create({
-      model,
+      model: "gpt-4o-mini",
       messages,
       stream: true,
-      temperature: useGpt4o ? 0.7 : 0.6,
-      max_tokens: 600,
+      temperature: 0.7,
     });
 
     const encoder = new TextEncoder();
@@ -55,15 +35,12 @@ export async function POST(req) {
               controller.enqueue(encoder.encode(token));
             }
           }
-        } catch (err) {
-          console.error("[RAWN PRO] erro durante streaming:", err);
-          // envia uma linha para o cliente ver algo em vez de falhar mudo
+        } catch (error) {
+          console.error("[RAWN PRO] Erro no streaming:", error);
           controller.enqueue(
-            encoder.encode("⚠️ Erro ao processar a resposta. Tente novamente.\n")
+            encoder.encode("⚠️ Erro ao gerar resposta. Tente novamente.\n")
           );
         } finally {
-          const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
-          console.log(`[RAWN PRO] streaming finalizado em ${elapsed}s (${model})`);
           controller.close();
         }
       },
@@ -77,12 +54,7 @@ export async function POST(req) {
       },
     });
   } catch (error) {
-    console.error("[RAWN PRO] erro geral /api/chat:", error);
-    const msg =
-      typeof error?.message === "string"
-        ? error.message
-        : "Falha ao processar requisição";
-    return new Response(JSON.stringify({ error: msg }), { status: 500 });
+    console.error("[RAWN PRO] Erro geral:", error);
+    return new Response("Erro interno no servidor.", { status: 500 });
   }
 }
-
