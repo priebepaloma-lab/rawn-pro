@@ -1,67 +1,68 @@
-// next.config.mjs — RAWN PRO ⚡ Configuração PWA + Turbopack (Next.js 15)
-// -------------------------------------------------------
-// Configuração otimizada para performance, cache, segurança e suporte PWA.
-
-import path from "path";
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
 
-  // ✅ Otimizações gerais
-  poweredByHeader: false,
-  compress: true,
-  productionBrowserSourceMaps: false,
-
-  // ✅ Configurações de imagens (caso use <Image /> futuramente)
-  images: {
-    unoptimized: true, // evita build com otimização automática
-    formats: ["image/avif", "image/webp"],
+  // Nova sintaxe para server actions (sem boolean)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
   },
 
-  // ✅ Cabeçalhos de segurança e cache
+  images: {
+    domains: ["raw.githubusercontent.com", "vercel.app"],
+  },
+  eslint: {
+    // Use ESLint CLI separately; avoid Next's deprecated lint wrapper during build
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     return [
       {
-        source: "/(.*)",
+        // Security headers for all routes
+        source: "/:path*",
         headers: [
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://api.openai.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:",
+          },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=()" },
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
-          { key: "X-XSS-Protection", value: "1; mode=block" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Permissions-Policy", value: "geolocation=(), microphone=(), camera=()" },
+        ],
+      },
+      {
+        // Long cache for static assets under /assets
+        source: "/assets/:all*(svg|png|jpg|jpeg|webp|gif|ico)",
+        headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Long cache for common static file types at root
+        source: "/:all*(svg|png|jpg|jpeg|webp|gif|ico|css|js|woff|woff2|ttf|otf)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Short cache for manifest
+        source: "/manifest.json",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        // Ensure SW always revalidates
+        source: "/service-worker.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
         ],
       },
     ];
   },
-
-  // ✅ Regras de cache específicas para o Service Worker e manifest
-  async rewrites() {
-    return [
-      { source: "/service-worker.js", destination: "/service-worker.js" },
-      { source: "/manifest.json", destination: "/manifest.json" },
-    ];
-  },
-
-  // ✅ Compatibilidade local e deploy
-  env: {
-    NEXT_PUBLIC_APP_NAME: "RAWN PRO",
-    NEXT_PUBLIC_VERSION: "1.0.0",
-  },
-
-  // ✅ Novo formato Turbopack (substitui experimental.turbo)
-  turbopack: {
-    rules: {},
-  },
-
-  // ✅ Permitir desenvolvimento em rede local
-  allowedDevOrigins: ["http://192.168.100.5:3000"],
-
-  // ✅ Saída standalone (ótimo para builds no Vercel)
-  output: "standalone",
 };
 
 export default nextConfig;

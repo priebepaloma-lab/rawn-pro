@@ -1,6 +1,9 @@
-// app/layout.js — RAWN PRO • Head (PWA) + color-scheme meta + wrapper
+// app/layout.js — RAWN PRO — Head (PWA) + color-scheme meta + wrapper
 import "./globals.css";
 import LayoutClient from "./layout.client";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "RAWN PRO — Alta Performance Fitness Pro",
@@ -19,20 +22,18 @@ export default function RootLayout({ children }) {
 
         {/* iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
-        />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="RAWN PRO" />
         <link rel="apple-touch-icon" href="/icon-512.png" />
 
-        {/* 👉 força os controles nativos (incl. barra acima do teclado) a usarem tema escuro */}
+        {/* Força os controles nativos (incl. barra acima do teclado) a usarem tema escuro */}
         <meta name="color-scheme" content="dark" />
       </head>
 
-      <body>
+      <body className={inter.className}>
         <LayoutClient>{children}</LayoutClient>
       </body>
     </html>
   );
 }
+

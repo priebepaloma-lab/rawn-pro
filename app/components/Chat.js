@@ -53,7 +53,7 @@ export default function Chat() {
       console.error("Erro:", err);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "⚠️ Erro ao gerar resposta. Tente novamente." },
+        { role: "assistant", content: "Erro ao gerar resposta. Tente novamente." },
       ]);
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ export default function Chat() {
           <div className="rp-row rp-left">
             <div className="rp-bubble rp-bot rp-typing">
               {partial}
-              <span className="blinker">▋</span>
+              <span className="blinker" aria-hidden="true">▋</span>
             </div>
           </div>
         )}
@@ -92,11 +92,12 @@ export default function Chat() {
         <input
           className="rp-input"
           placeholder="Digite sua mensagem..."
+          aria-label="Mensagem"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
         />
-        <button type="submit" className="rp-send" disabled={loading}>
+        <button type="submit" className="rp-send" disabled={loading} aria-label="Enviar mensagem">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.4" stroke="currentColor" className="rp-send-ic">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12l15-7.5L13.5 12l6 7.5-15-7.5z" />
           </svg>
@@ -105,3 +106,4 @@ export default function Chat() {
     </div>
   );
 }
+

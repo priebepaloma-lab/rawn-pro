@@ -1,12 +1,13 @@
-// app/layout.client.js — RAWN PRO ⚡ Splash + iOS Keyboard Fix + SW + Layout
+// app/layout.client.js — RAWN PRO — Splash + iOS Keyboard Fix + SW + Layout
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function LayoutClient({ children }) {
   const [showSplash, setShowSplash] = useState(true);
   const [fadeIn, setFadeIn] = useState(false);
 
-  // ✅ Corrige altura real do app quando o teclado abre (iOS) usando visualViewport
+  // Corrige altura real do app quando o teclado abre (iOS) usando visualViewport
   useEffect(() => {
     const setAppHeight = () => {
       const h = window.visualViewport?.height || window.innerHeight;
@@ -23,23 +24,23 @@ export default function LayoutClient({ children }) {
     };
   }, []);
 
-  // ✅ Splash: 1 ciclo do "breathe" (≈4.5s) + fade-out suave
+  // Splash: 1 ciclo do "breathe" (~4.5s) + fade-out suave
   useEffect(() => {
     const t = setTimeout(() => {
       setShowSplash(false);
       setTimeout(() => setFadeIn(true), 100);
-    }, 4400 + 900); // 4.4s de espera + 0.9s de fadeOut (sincronizado ao CSS)
+    }, 4400 + 900);
     return () => clearTimeout(t);
   }, []);
 
-  // ✅ Service Worker
+  // Service Worker
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       const onLoad = () => {
         navigator.serviceWorker
           .register("/service-worker.js")
-          .then(() => console.log("✅ RAWN PRO Service Worker ativo"))
-          .catch((err) => console.error("⚠️ Erro ao registrar Service Worker:", err));
+          .then(() => console.log("RAWN PRO Service Worker ativo"))
+          .catch((err) => console.error("Erro ao registrar Service Worker:", err));
       };
       window.addEventListener("load", onLoad);
       return () => window.removeEventListener("load", onLoad);
@@ -50,14 +51,28 @@ export default function LayoutClient({ children }) {
     <>
       {showSplash && (
         <div className="rp-splash">
-          <img src="/assets/logo.png" alt="RAWN PRO" className="rp-splash-logo" />
+          <Image
+            src="/assets/logo.png"
+            alt="RAWN PRO"
+            className="rp-splash-logo"
+            width={128}
+            height={128}
+            priority
+          />
         </div>
       )}
 
       <main className={`rp-root ${fadeIn ? "rp-fade-in" : ""}`} id="app-root">
         {/* Header global */}
         <header className="rp-header">
-          <img src="/assets/logo.png" alt="RAWN PRO" className="rp-logo" />
+          <Image
+            src="/assets/logo.png"
+            alt="RAWN PRO"
+            className="rp-logo"
+            width={72}
+            height={72}
+            priority
+          />
           <h2 className="rp-subtitle">Alta Performance Fitness Pro</h2>
         </header>
 
@@ -73,3 +88,4 @@ export default function LayoutClient({ children }) {
     </>
   );
 }
+

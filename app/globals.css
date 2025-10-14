@@ -1,3 +1,8 @@
+/* === TAILWIND CORE IMPORTS === */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* app/globals.css — RAWN PRO Experience "Glow Pulse" Edition ⚡ */
 
 :root {
@@ -36,13 +41,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
-  /* ajuda a reduzir “saltos” no iOS */
   overscroll-behavior-y: contain;
 }
 
 /* Root container */
 .rp-root {
-  min-height: 100dvh; /* Dynamic viewport height — melhor para teclado iOS */
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
@@ -179,10 +183,9 @@ body {
   background: rgba(15, 15, 15, 0.85);
   color: var(--text);
   padding: 0 18px;
-  font-size: 16px; /* evita zoom no iOS */
+  font-size: 16px;
   outline: none;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  /* reforça tema escuro para controles nativos */
   color-scheme: dark;
 }
 
@@ -285,7 +288,7 @@ body {
   to { opacity: 0; visibility: hidden; }
 }
 
-/* Light mode (se o usuário forçou claro no SO) */
+/* Light mode */
 @media (prefers-color-scheme: light) {
   .rp-splash {
     background: radial-gradient(circle at 50% 40%, #f5fff8 0%, #d8f8e6 35%, #b9e5cc 100%);
@@ -310,7 +313,7 @@ body {
   to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
 }
 
-/* Overlay para cobrir área atrás do teclado (se necessário) */
+/* Overlay teclado iOS */
 @supports (-webkit-touch-callout: none) {
   .rp-keyboard-overlay {
     position: fixed;
