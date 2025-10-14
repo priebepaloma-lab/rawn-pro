@@ -4,7 +4,7 @@
 // - Navegação (HTML): Network-first com fallback ao cache
 // - Assets estáticos: Cache-first com atualização em segundo plano
 
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const RUNTIME_CACHE = `rawnpro-runtime-${CACHE_VERSION}`;
 const STATIC_CACHE = `rawnpro-static-${CACHE_VERSION}`;
 
