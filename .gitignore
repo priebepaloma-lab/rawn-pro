@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+<<<<<<< HEAD
+=======
+/test-results
+/playwright-report
+/blob-report
+>>>>>>> 0edce9270c3332c42d0ddadaf5aa199cc416f7e7
 
 # next.js
 /.next/

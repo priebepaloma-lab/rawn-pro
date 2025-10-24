@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import Image from "next/image";
 
 export default function Home() {
@@ -62,4 +63,10 @@ export default function Home() {
       </main>
     </div>
   );
+=======
+import { ChatPage } from "@/components/ChatPage";
+
+export default function Home() {
+  return <ChatPage />;
+>>>>>>> 0edce9270c3332c42d0ddadaf5aa199cc416f7e7
 }
