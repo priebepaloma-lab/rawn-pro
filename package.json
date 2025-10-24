@@ -1,34 +1,4 @@
 {
-<<<<<<< HEAD
-  "name": "rawnpro-project",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "next lint",
-  "format": "prettier --write .",
-  "prepare": "husky install",
-  "check": "tsc --noEmit && eslint .",
-  "audit": "npm audit --audit-level=moderate"
-},
-  "dependencies": {
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "next": "16.0.0"
-  },
-  "devDependencies": {
-    "babel-plugin-react-compiler": "1.0.0",
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.0"
-=======
   "name": "rawn-pro",
   "version": "0.1.0",
   "private": true,
@@ -67,6 +37,5 @@
     "tailwindcss": "^4",
     "ts-jest": "^29.2.5",
     "typescript": "^5"
->>>>>>> 0edce9270c3332c42d0ddadaf5aa199cc416f7e7
   }
 }
