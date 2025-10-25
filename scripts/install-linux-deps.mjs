@@ -44,7 +44,13 @@ console.log(
 );
 
 try {
-  execSync(command, { stdio: "inherit", env: process.env });
+  const env = {
+    ...process.env,
+    NODE_ENV: "development",
+    NPM_CONFIG_PRODUCTION: "false",
+    npm_config_production: "false",
+  };
+  execSync(command, { stdio: "inherit", env });
   console.log("[install-linux-deps] LightningCSS native dependencies ready.");
 } catch (error) {
   console.warn(
