@@ -12,26 +12,43 @@ const TARGET_DEPS = [
 ];
 
 if (process.platform !== "linux") {
+  console.log(
+    `[install-linux-deps] Skipping native dependency install on ${process.platform}.`
+  );
   process.exit(0);
 }
 
-for (const { name, version } of TARGET_DEPS) {
+const missingSpecs = TARGET_DEPS.reduce((acc, { name, version }) => {
   try {
     require.resolve(name);
-    continue;
+    return acc;
   } catch {
-    // dependency missing, install it
+    acc.push(`${name}@${version}`);
+    return acc;
   }
+}, []);
 
-  const spec = `${name}@${version}`;
-  try {
-    execSync(`npm install ${spec} --no-save --ignore-scripts`, {
-      stdio: "inherit",
-    });
-  } catch (error) {
-    console.warn(
-      `[install-linux-deps] Failed to install ${spec}: ${error.message}`
-    );
-    throw error;
-  }
+if (missingSpecs.length === 0) {
+  console.log(
+    "[install-linux-deps] Native Linux dependencies already present. Skipping installation."
+  );
+  process.exit(0);
+}
+
+const command = `npm install ${missingSpecs.join(
+  " "
+)} --no-save --ignore-scripts --no-package-lock`;
+
+console.log(
+  "[install-linux-deps] Installing LightningCSS native dependencies for Linux..."
+);
+
+try {
+  execSync(command, { stdio: "inherit", env: process.env });
+  console.log("[install-linux-deps] LightningCSS native dependencies ready.");
+} catch (error) {
+  console.warn(
+    `[install-linux-deps] Failed to install native dependencies: ${error.message}`
+  );
+  throw error;
 }
