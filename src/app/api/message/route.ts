@@ -124,38 +124,42 @@ export async function POST(request: Request) {
       message,
       attachments: rawAttachments,
       history: contextMessages,
-      summary: payload.summaryOverride ?? memorySnapshot.summary,
+      summary:
+        payload.summaryOverride ?? (memorySnapshot as any)?.summary ?? null,
       requestId,
     });
 
     const latencyMs = Date.now() - startedAt;
     const summaryInput: SummaryInputMessage[] = [
       ...contextMessages,
-      { role: "assistant", content: result.reply.slice(0, 600) },
+      {
+        role: "assistant",
+        content: (result as any).reply?.slice(0, 600) ?? "",
+      },
     ];
     const newSummary = summarizeConversation(
       summaryInput,
-      payload.summaryOverride ?? memorySnapshot.summary
+      payload.summaryOverride ?? (memorySnapshot as any)?.summary ?? null
     );
 
     const persistedSummary = autoSummarize(
-      newSummary ?? memorySnapshot.summary,
+      newSummary ?? (memorySnapshot as any)?.summary ?? null,
       summaryInput
     );
 
     await saveMemorySummary(
       user,
       persistedSummary,
-      memorySnapshot.resetCount
+      (memorySnapshot as any)?.resetCount ?? null
     );
 
     logEvent("rawn_message_completed", {
       requestId,
       route: ROUTE_NAME,
       latencyMs,
-      model: result.model,
-      contextType: result.context.tipo,
-      usage: result.usage,
+      model: (result as any)?.model ?? null,
+      contextType: (result as any)?.context?.tipo ?? null,
+      usage: (result as any)?.usage ?? null,
       summaryLength: persistedSummary?.length ?? 0,
     });
 
@@ -163,14 +167,14 @@ export async function POST(request: Request) {
       requestId,
       userId: user,
       latencyMs,
-      modelUsed: result.model,
-      tokenUsage: result.usage,
+      modelUsed: (result as any)?.model ?? null,
+      tokenUsage: (result as any)?.usage,
       status: "success",
     });
 
     return NextResponse.json({
-      reply: result.reply,
-      context: result.context,
+      reply: (result as any)?.reply ?? "",
+      context: (result as any)?.context ?? null,
     });
   } catch (error) {
     const latencyMs = Date.now() - startedAt;
